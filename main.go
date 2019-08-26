@@ -64,6 +64,7 @@ func main() {
 	goddi.GetGroupMembers(li.Conn, baseDN, "Enterprise Admins")
 	goddi.GetGroupMembers(li.Conn, baseDN, "Forest Admins")
 	goddi.GetUsersLocked(li.Conn, baseDN)
+	goddi.GetUsersPasswordNotRequired(li.Conn, baseDN)
 	goddi.GetUsersDisabled(li.Conn, baseDN)
 	goddi.GetGroupsAll(li.Conn, baseDN)
 	goddi.GetDomainSite(li.Conn, baseDN)

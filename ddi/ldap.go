@@ -121,6 +121,42 @@ func GetUsersLocked(conn *ldap.Conn, baseDN string) {
 	writeCSV("Domain_Users_Locked", csv)
 }
 
+// GetUsersPasswordNotRequired users with PWDNOTREQ attribute set
+func GetUsersPasswordNotRequired(conn *ldap.Conn, baseDN string) {
+
+	attributes := []string{
+		"sAMAccountName",
+		"sAMAccountType",
+		"userPrincipalName",
+		"displayName",
+		"givenName",
+		"description",
+		"adminCount",
+		"homeDirectory",
+		"memberOf"}
+	filter := "(&(objectCategory=person)(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=32))"
+	csv := [][]string{}
+	csv = append(csv, attributes)
+
+	sr := ldapSearch(baseDN, filter, attributes, conn)
+
+	fmt.Printf("[i] Users that do not require a password: %d found\n", len(sr.Entries))
+	for _, entry := range sr.Entries {
+		data := []string{
+			entry.GetAttributeValue("sAMAccountName"),
+			entry.GetAttributeValue("sAMAccountType"),
+			entry.GetAttributeValue("userPrincipalName"),
+			entry.GetAttributeValue("displayName"),
+			entry.GetAttributeValue("givenName"),
+			entry.GetAttributeValue("description"),
+			entry.GetAttributeValue("adminCount"),
+			entry.GetAttributeValue("homeDirectory"),
+			entry.GetAttributeValue("memberOf")}
+		csv = append(csv, data)
+	}
+	writeCSV("Domain_Users_PasswordNotRequired", csv)
+}
+
 // GetUsersDisabled disabled users
 // Reference: Scott Sutherland (@_nullbind)
 func GetUsersDisabled(conn *ldap.Conn, baseDN string) {
