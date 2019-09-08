@@ -33,7 +33,8 @@ func GetUsers(conn *ldap.Conn, baseDN string) {
 		"spring",
 		"summer",
 		"fall",
-		"winter"}
+		"winter",
+		"welcome"}
 	filter := "(&(objectCategory=person)(objectClass=user)(SamAccountName=*))"
 	csv := [][]string{}
 	csv = append(csv, attributes)
@@ -119,6 +120,78 @@ func GetUsersLocked(conn *ldap.Conn, baseDN string) {
 		csv = append(csv, data)
 	}
 	writeCSV("Domain_Users_Locked", csv)
+}
+
+// GetUsersNoKrbPreAuth users with "Do not require kerberos preauthentication" enabled
+func GetUsersNoKrbPreAuth(conn *ldap.Conn, baseDN string) {
+
+	attributes := []string{
+		"sAMAccountName",
+		"sAMAccountType",
+		"userPrincipalName",
+		"displayName",
+		"givenName",
+		"description",
+		"adminCount",
+		"homeDirectory",
+		"memberOf"}
+	filter := "(&(objectCategory=person)(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=4194304))"
+	csv := [][]string{}
+	csv = append(csv, attributes)
+
+	sr := ldapSearch(baseDN, filter, attributes, conn)
+
+	fmt.Printf("[i] No Krb Pre-Auth Users: %d found\n", len(sr.Entries))
+	for _, entry := range sr.Entries {
+		data := []string{
+			entry.GetAttributeValue("sAMAccountName"),
+			entry.GetAttributeValue("sAMAccountType"),
+			entry.GetAttributeValue("userPrincipalName"),
+			entry.GetAttributeValue("displayName"),
+			entry.GetAttributeValue("givenName"),
+			entry.GetAttributeValue("description"),
+			entry.GetAttributeValue("adminCount"),
+			entry.GetAttributeValue("homeDirectory"),
+			entry.GetAttributeValue("memberOf")}
+		csv = append(csv, data)
+	}
+	writeCSV("Domain_Users_No_Krb_PreAuth", csv)
+}
+
+// GetUsersUncontrainedDelegation Accounts trusted for delegation (unconstrained delgation)
+func GetUsersUncontrainedDelegation(conn *ldap.Conn, baseDN string) {
+
+	attributes := []string{
+		"sAMAccountName",
+		"sAMAccountType",
+		"userPrincipalName",
+		"displayName",
+		"givenName",
+		"description",
+		"adminCount",
+		"homeDirectory",
+		"memberOf"}
+	filter := "(userAccountControl:1.2.840.113556.1.4.803:=524288)"
+	csv := [][]string{}
+	csv = append(csv, attributes)
+
+	sr := ldapSearch(baseDN, filter, attributes, conn)
+
+	fmt.Printf("[i] Unconstrained Delegation Users: %d found\n", len(sr.Entries))
+	for _, entry := range sr.Entries {
+		data := []string{
+			entry.GetAttributeValue("sAMAccountName"),
+			entry.GetAttributeValue("sAMAccountType"),
+			entry.GetAttributeValue("userPrincipalName"),
+			entry.GetAttributeValue("displayName"),
+			entry.GetAttributeValue("givenName"),
+			entry.GetAttributeValue("description"),
+			entry.GetAttributeValue("adminCount"),
+			entry.GetAttributeValue("homeDirectory"),
+			entry.GetAttributeValue("memberOf")}
+		csv = append(csv, data)
+	}
+	writeCSV("Domain_Users_Unconstrained_Delegation", csv)
 }
 
 // GetUsersPasswordNotRequired users with PWDNOTREQ attribute set
@@ -284,6 +357,44 @@ func GetMachineAccountOldPassword(conn *ldap.Conn, baseDN string) {
 		csv = append(csv, data)
 	}
 	writeCSV("Domain_MachineAccount_Old_Password", csv)
+}
+
+// GetUserAccountOldPassword machine accounts with password older than 90 days
+func GetUserAccountOldPassword(conn *ldap.Conn, baseDN string) {
+	attributes := []string{
+		"sAMAccountName",
+		"sAMAccountType",
+		"userPrincipalName",
+		"displayName",
+		"givenName",
+		"description",
+		"pwdlastset",
+		"adminCount",
+		"homeDirectory",
+		"memberOf"}
+	ninety := getWinFiletime(90)
+	filter := "(&(sAMAccountType=805306368)(pwdlastset<=" + ninety + "))"
+	csv := [][]string{}
+	csv = append(csv, attributes)
+
+	sr := ldapSearch(baseDN, filter, attributes, conn)
+
+	fmt.Printf("[i] User Accounts with passwords older than 90 days: %d found\n", len(sr.Entries))
+	for _, entry := range sr.Entries {
+		data := []string{
+			entry.GetAttributeValue("sAMAccountName"),
+			entry.GetAttributeValue("sAMAccountType"),
+			entry.GetAttributeValue("userPrincipalName"),
+			entry.GetAttributeValue("displayName"),
+			entry.GetAttributeValue("givenName"),
+			entry.GetAttributeValue("description"),
+			entry.GetAttributeValue("pwdlastset"),
+			entry.GetAttributeValue("adminCount"),
+			entry.GetAttributeValue("homeDirectory"),
+			entry.GetAttributeValue("memberOf")}
+		csv = append(csv, data)
+	}
+	writeCSV("Domain_UserAccount_Old_Password", csv)
 }
 
 // GetFSMORoles domain FSMO Roles
