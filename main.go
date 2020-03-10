@@ -17,7 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NetSPI/goddi/ddi"
+	//"github.com/NetSPI/goddi/ddi"
+	"./ddi"
 )
 
 func main() {
@@ -82,6 +83,7 @@ func main() {
 	goddi.GetFSMORoles(li.Conn, baseDN)
 	goddi.GetSPNs(li.Conn, baseDN)
 	goddi.GetLAPS(li.Conn, baseDN)
+	goddi.GetBitlocker(li.Conn, baseDN)
 	goddi.GetGPP(li.Conn, li.Domain, li.LdapServer, li.Usergpp, li.Pass)
 	stop := time.Since(start)
 

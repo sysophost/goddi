@@ -756,6 +756,58 @@ func GetLAPS(conn *ldap.Conn, baseDN string) {
 	writeCSV("Domain_Passwords_LAPS", csv)
 }
 
+
+func GetBitlocker(conn *ldap.Conn, baseDN string) {
+
+	attributes := []string{
+		"distinguishedName",
+		"msFVE-RecoveryPassword"}
+	filter := "(&(objectclass=msFVE-RecoveryInformation))"
+	csv := [][]string{}
+	csv = append(csv, attributes)
+
+	sr := ldapSearch(baseDN, filter, attributes, conn)
+
+	for _, entry := range sr.Entries {
+		if len(entry.GetAttributeValue("msFVE-RecoveryPassword")) > 0 {
+			hostname := getDNSHostName(conn, baseDN, entry.GetAttributeValue("distinguishedName"))
+			fmt.Printf(hostname)
+			data := []string{
+				hostname,
+				entry.GetAttributeValue("msFVE-RecoveryPassword")}
+			csv = append(csv, data)
+		}
+	}
+	fmt.Printf("[i] Bitlocker passwords: %d found\n", len(csv)-1)
+	writeCSV("Domain_Computers_Bitlocker", csv)
+}
+
+func getDNSHostName(conn *ldap.Conn, baseDN string, dn string) string {
+
+	attributes := []string{
+		"dNSHostName"}
+
+	//TODO: use a regex to extract the second part of thsi DN
+	//	CN=2019-06-21T10:22:52\+10:00{4894CBDA-A3EE-41EF-9156-0AFDA546D545},CN=LCC-003440,OU=Computers,OU=LCC,DC=liverpool,DC=nsw,DC=gov,DC=au
+
+	dnHalf := "CN=LCC-003440,OU=Computers,OU=LCC,DC=liverpool,DC=nsw,DC=gov,DC=au"
+	filter := "(&(objectCategory=Computer)(distinguishedName=" + dnHalf + "))"
+	fmt.Printf(dnHalf)
+
+	sr := ldapSearch(baseDN, filter, attributes, conn)
+
+
+	for _, entry := range sr.Entries {
+		if len(entry.GetAttributeValue("dNSHostName")) > 0 {
+			dNSHostName := entry.GetAttributeValue("dNSHostName")
+			return dNSHostName
+		}
+	}
+
+	dNSHostName := ""
+	return dNSHostName
+}
+
 // GetDomainTrusts all domain trusts and details
 // Reference: Scott Sutherland (@_nullbind)
 func GetDomainTrusts(conn *ldap.Conn, baseDN string) {
